@@ -32,16 +32,19 @@ export function DistributorList() {
       if (!response.ok) throw new Error("Error al obtener los distribuidores")
 
       const data = await response.json()
+      console.log("Datos recibidos del backend:", data) // Depuración
 
       // Transformar datos si el backend usa nombres en español
       const transformedData = data.map((dist: any) => ({
         id: dist.id,
-        name: dist.nombre,
-        phone: dist.telefono,
-        email: dist.correo_electronico,
-        location: dist.pais,
+        nombre: dist.nombre, // Usar `nombre` en lugar de `name`
+        telefono: dist.telefono,
+        correo_electronico: dist.correo_electronico,
+        pais: dist.pais,
         ambassadorsCount: 0, // Valor predeterminado si no viene de la API
       }))
+
+      console.log("Datos transformados:", transformedData) // Depuración
 
       setDistributors(transformedData)
     } catch (error) {
@@ -99,9 +102,9 @@ export function DistributorList() {
       {distributors.map((distributor) => (
         <Card key={distributor.id}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-xl">{distributor.name}</CardTitle>
+            <CardTitle className="text-xl">{distributor.nombre}</CardTitle>
             <div className="flex items-center gap-2">
-              <Badge variant="default">Activo</Badge> {/* No se usa "status", puedes quitarlo si no lo necesitas */}
+              <Badge variant="default">Activo</Badge>
               <Button
                 variant="ghost"
                 size="icon"
@@ -131,7 +134,7 @@ export function DistributorList() {
             <div className="grid gap-2">
               <div className="flex items-center gap-2">
                 <span className="font-medium">Ubicación:</span>
-                <span>{distributor.location}</span>
+                <span>{distributor.pais}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-medium">Embajadores:</span>
@@ -140,7 +143,7 @@ export function DistributorList() {
               <div className="flex items-center gap-2">
                 <span className="font-medium">Contacto:</span>
                 <span>
-                  {distributor.phone} | {distributor.email}
+                  {distributor.telefono} | {distributor.correo_electronico}
                 </span>
               </div>
             </div>

@@ -1,15 +1,15 @@
-"use client";
+"use client"
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form";
-import { Input } from "./ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { toast } from "../hooks/use-toast";
-import { Distributor } from "./types"; // Importar el tipo Distributor
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
+import { Button } from "./ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form"
+import { Input } from "./ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { toast } from "../hooks/use-toast"
+import { Distributor } from "./types"
 
 // Esquema de validación con Zod
 const formSchema = z.object({
@@ -18,19 +18,19 @@ const formSchema = z.object({
   correo_electronico: z.string().email("Correo electrónico inválido"),
   pais: z.string().min(2, "El país debe tener al menos 2 caracteres"),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").optional(), // Campo opcional
-  status: z.enum(["active", "inactive"]),
-});
+  status: z.enum(["active", "inactive"]), // Campo de estado (activo/inactivo)
+})
 
 // Props del componente
 interface EditDistributorModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  distributor: Distributor;
-  onUpdate: (distributor: Distributor) => void;
+  isOpen: boolean
+  onClose: () => void
+  distributor: Distributor
+  onUpdate: (distributor: Distributor) => void
 }
 
 export function EditDistributorModal({ isOpen, onClose, distributor, onUpdate }: EditDistributorModalProps) {
-  // Inicializar el formulario con useForm
+  // Inicializar el formulario con los valores del distribuidor seleccionado
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -39,20 +39,19 @@ export function EditDistributorModal({ isOpen, onClose, distributor, onUpdate }:
       correo_electronico: distributor.correo_electronico,
       pais: distributor.pais,
       password: "", // Dejar vacío por defecto
-      status: distributor.status,
+      status: distributor.status || "active", // Valor predeterminado para el estado
     },
-  });
+  })
 
-  // Función para manejar el envío del formulario
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const token = localStorage.getItem("token"); // Obtener el token de autenticación
+    const token = localStorage.getItem("access_token") // Cambiado a "access_token"
     if (!token) {
       toast({
         title: "Error",
         description: "No se encontró el token de autenticación.",
         variant: "destructive",
-      });
-      return;
+      })
+      return
     }
 
     try {
@@ -64,30 +63,30 @@ export function EditDistributorModal({ isOpen, onClose, distributor, onUpdate }:
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(values),
-      });
+      })
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Error al actualizar el distribuidor");
+        const errorData = await response.json()
+        throw new Error(errorData.detail || "Error al actualizar el distribuidor")
       }
 
       // Actualizar el estado local
-      const updatedDistributor = { ...distributor, ...values };
-      onUpdate(updatedDistributor);
+      const updatedDistributor = { ...distributor, ...values }
+      onUpdate(updatedDistributor)
       toast({
         title: "Distribuidor actualizado",
         description: "Los cambios han sido guardados exitosamente.",
-      });
-      onClose(); // Cerrar el modal después de guardar
+      })
+      onClose() // Cerrar el modal después de guardar
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error:", error)
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "No se pudo actualizar el distribuidor.",
         variant: "destructive",
-      });
+      })
     }
-  };
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -206,5 +205,5 @@ export function EditDistributorModal({ isOpen, onClose, distributor, onUpdate }:
         </Form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

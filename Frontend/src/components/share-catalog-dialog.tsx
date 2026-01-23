@@ -23,7 +23,9 @@ export function ShareCatalogDialog({ isOpen, onClose }: ShareCatalogDialogProps)
         if (rol === "Embajador") {
           endpoint = "https://api.unicornio.tech/ambassadors";
         } else if (rol === "Negocio") {
-          endpoint = "http://127.0.0.1:8000/negocios/perfil";
+          endpoint = "https://api.unicornio.tech/negocios/perfil";
+        } else if (rol === "Distribuidor") {
+          endpoint = "https://api.unicornio.tech/distribuidor/me";
         } else {
           throw new Error("Rol no válido o no encontrado");
         }

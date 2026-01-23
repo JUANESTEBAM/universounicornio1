@@ -1,5 +1,5 @@
 export async function fetchClients() {
-    const response = await fetch('http://127.0.0.1:8000/clients');
+    const response = await fetch('https://api.unicornio.tech/clients');
     if (!response.ok) {
       throw new Error('Error al obtener los clientes');
     }

@@ -38,11 +38,11 @@ export function ProfileInfo() {
 
         let endpoint = "";
         if (rol === "Embajador") {
-          endpoint = "http://127.0.0.1:8000/ambassadors";
+          endpoint = "https://api.unicornio.tech/ambassadors";
         } else if (rol === "Negocio") {
-          endpoint = "http://127.0.0.1:8000/negocios/perfil";
+          endpoint = "https://api.unicornio.tech/negocios/perfil";
         } else if (rol === "Distribuidor") {
-          endpoint = "http://127.0.0.1:8000/distribuidor/me"; // Nuevo endpoint para distribuidores
+          endpoint = "https://api.unicornio.tech/distribuidor/me"; // Nuevo endpoint para distribuidores
         } else {
           throw new Error("Rol no válido o no encontrado");
         }

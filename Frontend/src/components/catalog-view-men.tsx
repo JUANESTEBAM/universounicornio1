@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
-import AcondicionadorMen from "../assets/CONDITIONER MEN.png";
+import AcondicionadorMen from "../assets/Acondicionador.png";
 import ShampooMen from "../assets/SHAMPOO MEN.png";
 import crema3en1Men from "../assets/CREAM 3 IN 1.png";
 import GelMen from "../assets/GEL MEN.png";

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; // Necesitamos useNavigate para redirigir
 import { ClientStats } from "../../components/client-stats";
 import { Button } from "../../components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, RefreshCw } from "lucide-react"; // Importamos el ícono de recarga
 import { AddContactForm } from "../../components/add-contact-form";
 import { Modal } from "../../components/ui/modal";
 import { ContactList } from "../../components/contact-list"; // No es necesario pasar contactos como prop
@@ -29,14 +29,25 @@ export default function ClientsPage() {
     // Este código se puede ajustar si decides manejar la lógica de agregar contactos
   };
 
+  // Función para recargar la página
+  const handleReload = () => {
+    window.location.reload();
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-bold">Clientes</h1>
-        <Button onClick={() => setShowAddForm(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Añadir Contacto
-        </Button>
+        <div className="flex items-center space-x-2">
+          <Button onClick={handleReload} variant="outline">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Recargar
+          </Button>
+          <Button onClick={() => setShowAddForm(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Añadir Contacto
+          </Button>
+        </div>
       </div>
       <ClientStats />
       {/* Solo se muestra ContactList sin necesidad de pasar los contactos */}

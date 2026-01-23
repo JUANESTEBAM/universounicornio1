@@ -6,7 +6,8 @@ import { BsBag } from "react-icons/bs";
 const Cart = () => {
   const { items, getTotalPrice, removeItem, updateQuantity } = useCart();
   const [isOpen, setIsOpen] = useState(false);
-  const [currency, setCurrency] = useState("MXN"); // Moneda por defecto
+  const [currency, setCurrency] = useState("MXN");
+  const [country, setCountry] = useState("México"); // País por defecto
   const navigate = useNavigate();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search || "");
@@ -31,13 +32,15 @@ const Cart = () => {
         try {
           const response = await fetch(`https://api.unicornio.tech/api/pais?ref=${encodeURIComponent(ref)}`);
           const data = await response.json();
-          const country = data.pais;
+          const fetchedCountry = data.pais;
 
-          // Ajustar la moneda según el país
-          if (country === "Colombia") {
+          // Ajustar la moneda y país según el resultado
+          if (fetchedCountry === "Colombia") {
             setCurrency("COP");
+            setCountry("Colombia");
           } else {
             setCurrency("MXN");
+            setCountry("México");
           }
         } catch (error) {
           console.error("Error fetching country:", error);
@@ -54,6 +57,8 @@ const Cart = () => {
       state: {
         items,
         totalPrice: getTotalPrice(),
+        currency, // Enviamos la moneda al checkout
+        country   // Enviamos el país al checkout
       },
     });
   };

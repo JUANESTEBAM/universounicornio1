@@ -46,3 +46,4 @@ export interface Ambassador {
   salesCount: number;
   status: "active" | "inactive";
 }
+

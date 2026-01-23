@@ -9,9 +9,12 @@ import product2Img from "../assets/Shampoo.png";
 import product3Img from "../assets/Aceite.png";
 import product4Img from "../assets/Crema 3 en 1.png";
 import product5Img from "../assets/Defining Gel.png";
+import kitBasico from "../assets/kit basico.png"
+import kitDefinicion from "../assets/kit definicion.png"
+import kitLimpieza from "../assets/kit limpieza.png"
+import kitLineaSpecial from "../assets/KIT LÍNEA SPECIAL.png"
 import { useCart } from "./carritoContext";
 
-// Definición de la interfaz Product
 interface Product {
   id: number;
   name: string;
@@ -22,21 +25,22 @@ interface Product {
   currency?: string;
 }
 
-// Lista de productos con precios base en MXN
 const baseProducts: Product[] = [
   { id: 1, name: "Acondicionador", description: "shine & softness", price: 507.00, image: product1Img, category: "Lavado" },
   { id: 2, name: "Shampoo", description: "cleaning & freshness", price: 507.00, image: product2Img, category: "Lavado" },
   { id: 3, name: "Aceite", description: "pre lavado", price: 427.00, image: product3Img, category: "Tratamiento" },
   { id: 4, name: "Crema 3 en 1", description: "repair moisturize & define", price: 507.00, image: product4Img, category: "Definición" },
   { id: 5, name: "Gel", description: "shine & hold", price: 507.00, image: product5Img, category: "Definición" },
+  { id: 10, name: "Kit Definición", description: "", price: 850.00, image: kitDefinicion, category: "Kits" },
+  { id: 11, name: "Kit Limpieza", description: "", price: 850.00, image: kitLimpieza, category: "Kits" },
+  { id: 12, name: "Kit Básico", description: "", price: 1275.00, image: kitBasico, category: "Kits" },
+  { id: 13, name: "Kit Línea Special", description: "", price: 2050.00, image: kitLineaSpecial, category: "Kits" },
 ];
 
-// Función para formatear el precio
 const formatPrice = (price: number) => {
   return price.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };
 
-// Componente ProductCard
 const ProductCard = ({ product, onAddToCart, isDesktop = false, isLoading = false }: { product: Product; onAddToCart: (product: Product) => void; isDesktop?: boolean; isLoading?: boolean }) => {
   const formattedPrice = isLoading ? "Cargando..." : `${formatPrice(product.price)} ${product.currency || "MXN"}`;
 
@@ -67,8 +71,9 @@ const ProductCard = ({ product, onAddToCart, isDesktop = false, isLoading = fals
   );
 };
 
-// Componente ProductSection
 const ProductSection = ({ title, products, onAddToCart, isLoading }: { title: string; products: Product[]; onAddToCart: (product: Product) => void; isLoading: boolean }) => {
+  if (products.length === 0) return null;
+  
   return (
     <div className="mb-6">
       <h2 className="text-lg font-semibold mb-4" style={{ color: '#F198C0' }}>{title}</h2>
@@ -81,7 +86,6 @@ const ProductSection = ({ title, products, onAddToCart, isLoading }: { title: st
   );
 };
 
-// Componente PreProSection
 const PreProSection = () => {
   return (
     <div className="relative h-72 rounded-lg overflow-hidden">
@@ -99,7 +103,6 @@ const PreProSection = () => {
   );
 };
 
-// Componente EcommercePage
 const EcommercePage = () => {
   const { addItem } = useCart();
   const location = useLocation();
@@ -108,6 +111,7 @@ const EcommercePage = () => {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isColombia, setIsColombia] = useState(false);
 
   useEffect(() => {
     const fetchCountry = async () => {
@@ -117,24 +121,32 @@ const EcommercePage = () => {
           const data = await response.json();
           const country = data.pais;
 
+          setIsColombia(country === "Colombia");
+
           // Ajustar precios según el país
-          const adjustedProducts = baseProducts.map(product => {
-            let adjustedPrice = product.price;
-            let currency = "MXN"; // Moneda por defecto
-
-            if (country === "Colombia") {
-              // Precios fijos en COP
-              adjustedPrice = 77350; // Precio fijo para todos los productos
-              currency = "COP";
-
-              // Precio especial para el Aceite
-              if (product.id === 3) {
-                adjustedPrice = 59400; // Precio fijo para el Aceite
+          const adjustedProducts = baseProducts
+            .filter(product => {
+              // Si es Colombia, filtramos los kits
+              if (country === "Colombia" && product.category === "Kits") {
+                return false;
               }
-            }
+              return true;
+            })
+            .map(product => {
+              let adjustedPrice = product.price;
+              let currency = "MXN";
 
-            return { ...product, price: adjustedPrice, currency };
-          });
+              if (country === "Colombia") {
+                adjustedPrice = 77350; // Precio fijo para todos los productos
+                currency = "COP";
+
+                if (product.id === 3) {
+                  adjustedPrice = 59400; // Precio fijo para el Aceite
+                }
+              }
+
+              return { ...product, price: adjustedPrice, currency };
+            });
 
           setProducts(adjustedProducts);
         } catch (error) {
@@ -156,9 +168,13 @@ const EcommercePage = () => {
 
   const catalogLink = ref ? `/catalog-view-men?ref=${encodeURIComponent(ref)}` : "/catalog";
 
+  // Filtrar productos para mostrar solo los que correspondan
+  const filteredProducts = isColombia 
+    ? products.filter(p => p.category !== "Kits")
+    : products;
+
   return (
     <div className="bg-gray-50 min-h-screen pb-16">
-      {/* Header con redirección y parámetro ref */}
       <Link to={catalogLink}>
         <Card className="rounded-xl shadow-sm mx-4 mt-4 mb-6 cursor-pointer hover:shadow-md transition-shadow">
           <div className="relative p-4">
@@ -172,7 +188,7 @@ const EcommercePage = () => {
         </Card>
       </Link>
 
-      {/* Mobile View (para pantallas pequeñas) */}
+      {/* Mobile View */}
       <div className="md:hidden px-4">
         <ProductSection
           title="Lavado"
@@ -197,13 +213,21 @@ const EcommercePage = () => {
           onAddToCart={handleAddToCart}
           isLoading={isLoading}
         />
+        {!isColombia && (
+          <ProductSection
+            title="Kits"
+            products={products.filter((p) => p.category === "Kits")}
+            onAddToCart={handleAddToCart}
+            isLoading={isLoading}
+          />
+        )}
       </div>
 
-      {/* Tablet/Desktop View (pantallas md o mayores) */}
+      {/* Tablet/Desktop View */}
       <div className="hidden md:block px-6">
         <h2 className="text-2xl font-bold mb-6" style={{ color: '#F198C0' }}>Linea Special</h2>
         <div className="grid grid-cols-3 gap-8">
-          {products.map((product) => (
+          {filteredProducts.map((product) => (
             <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} isDesktop isLoading={isLoading} />
           ))}
         </div>

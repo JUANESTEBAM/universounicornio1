@@ -33,7 +33,6 @@ app = FastAPI()
 
 load_dotenv()
 
-
 MERCADO_PAGO_API_URL = "https://api.mercadopago.com/v1/payments"
 BUSINESS_CREDENTIALS = {
     "67b4ec6810a08e4b0f7c6dd8": {  # Green Energy Ltda.

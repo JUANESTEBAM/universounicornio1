@@ -15,16 +15,20 @@ interface Item {
 export default function CheckoutEnvio() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { items = [], totalPrice = 0 } = location.state || {};
+  const { 
+    items = [], 
+    totalPrice = 0,
+    currency = "MXN",
+    country = "México"
+  } = location.state || {};
 
   const queryParams = new URLSearchParams(location.search);
-  const ref = queryParams.get('ref');
+  const ref = queryParams.get("ref");
 
   const [formData, setFormData] = useState({
-    cedula: "",
     nombre: "",
     apellidos: "",
-    pais: "México",
+    pais: country,
     direccion: "",
     estado: "",
     ciudad: "",
@@ -35,10 +39,18 @@ export default function CheckoutEnvio() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Función para formatear el precio según la moneda
+  const formatPrice = (price: number) => {
+    if (currency === "COP") {
+      return price.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    } else {
+      return price.toFixed(2);
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Limpiar el error cuando el usuario comienza a escribir
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -46,9 +58,6 @@ export default function CheckoutEnvio() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-
-    // Validar campos obligatorios
-    if (!formData.cedula.trim()) newErrors.cedula = "La cédula es obligatoria";
     if (!formData.nombre.trim()) newErrors.nombre = "El nombre es obligatorio";
     if (!formData.apellidos.trim()) newErrors.apellidos = "Los apellidos son obligatorios";
     if (!formData.direccion.trim()) newErrors.direccion = "La dirección es obligatoria";
@@ -61,16 +70,15 @@ export default function CheckoutEnvio() {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0; // Retorna true si no hay errores
+    return Object.keys(newErrors).length === 0;
   };
 
   const handlePayment = async () => {
-    if (!validateForm()) {
-      return; // Detener la ejecución si hay errores
-    }
+    if (!validateForm()) return;
+
+    const costoEnvio = country === "Colombia" ? 25000 : 180;
 
     const userInfo = {
-      cedula: formData.cedula,
       nombre: formData.nombre,
       apellidos: formData.apellidos,
       pais_region: formData.pais,
@@ -86,6 +94,8 @@ export default function CheckoutEnvio() {
         quantity: item.quantity,
         unit_price: item.price,
       })),
+      costo_envio: costoEnvio,
+      currency: currency
     };
 
     try {
@@ -112,9 +122,7 @@ export default function CheckoutEnvio() {
     navigate(-1);
   };
 
-  // Verificar si todos los campos obligatorios están completos
   const isFormValid =
-    formData.cedula.trim() &&
     formData.nombre.trim() &&
     formData.apellidos.trim() &&
     formData.direccion.trim() &&
@@ -123,6 +131,8 @@ export default function CheckoutEnvio() {
     formData.telefono.trim() &&
     formData.email.trim() &&
     /^\S+@\S+\.\S+$/.test(formData.email);
+
+  const costoEnvio = country === "Colombia" ? 25000 : 180;
 
   return (
     <div className="max-w-4xl mx-auto p-4 bg-background">
@@ -137,20 +147,6 @@ export default function CheckoutEnvio() {
           </CardHeader>
           <CardContent>
             <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
-              {/* Campo de Cédula */}
-              <div className="space-y-2">
-                <Label htmlFor="cedula">INE *</Label>
-                <Input
-                  id="cedula"
-                  name="cedula"
-                  value={formData.cedula}
-                  onChange={handleChange}
-                  required
-                />
-                {errors.cedula && <p className="text-red-500 text-sm">{errors.cedula}</p>}
-              </div>
-
-              {/* Campos de Nombre y Apellidos */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="nombre">Nombre *</Label>
@@ -176,9 +172,8 @@ export default function CheckoutEnvio() {
                 </div>
               </div>
 
-              {/* Resto de los campos */}
               <div className="space-y-2">
-                <Label htmlFor="pais">País / Región *</Label>
+                <Label htmlFor="pais">País *</Label>
                 <Input id="pais" name="pais" value={formData.pais} onChange={handleChange} disabled />
               </div>
               <div className="space-y-2">
@@ -218,7 +213,7 @@ export default function CheckoutEnvio() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="codigoPostal">Código postal (opcional)</Label>
+                <Label htmlFor="codigoPostal">Código postal</Label>
                 <Input
                   id="codigoPostal"
                   name="codigoPostal"
@@ -265,21 +260,25 @@ export default function CheckoutEnvio() {
                     <span>
                       {item.name} x {item.quantity}
                     </span>
-                    <span>MXN {(item.price * item.quantity).toLocaleString()}</span>
+                    <span>{currency} {formatPrice(item.price * item.quantity)}</span>
                   </div>
                 ))
               ) : (
                 <div>No hay productos en el pedido.</div>
               )}
               <Separator />
+              <div className="flex justify-between">
+                <span>Costo de envío</span>
+                <span>{currency} {formatPrice(costoEnvio)}</span>
+              </div>
+              <Separator />
               <div className="flex justify-between font-bold">
                 <span>Total</span>
-                <span>${totalPrice.toLocaleString()}</span>
+                <span>{currency} {formatPrice(totalPrice + costoEnvio)}</span>
               </div>
             </div>
           </CardContent>
           <CardFooter className="flex justify-center gap-4 items-stretch">
-            {/* Botón "Realizar pedido" */}
             <button
               onClick={handlePayment}
               className={`w-full h-12 px-6 bg-black text-white rounded ${
@@ -290,7 +289,6 @@ export default function CheckoutEnvio() {
               Realizar pedido
             </button>
 
-            {/* Botón "Agregar más productos" */}
             <button
               onClick={handleGoBack}
               className="w-full h-12 px-6 bg-black text-white rounded hover:bg-gray-600 transition-colors"

@@ -26,54 +26,50 @@ export function ContactList() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContacts, setSelectedContacts] = useState<number[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const token = localStorage.getItem("access_token");
 
-  useEffect(() => {
-    const storedContacts = localStorage.getItem("clients");
-
-    if (storedContacts) {
-      setContacts(JSON.parse(storedContacts));
-      console.log("📂 Clientes cargados desde localStorage");
+  const fetchContacts = async () => {
+    if (!token) {
+      setError("No se encontró el token de acceso");
+      setLoading(false);
       return;
     }
 
-    const fetchContacts = async () => {
-      if (!token) {
-        console.error("No se encontró el token de acceso");
-        return;
+    try {
+      const response = await fetch("https://api.unicornio.tech/clientes", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const transformedContacts: Contact[] = data.map((contact: any) => ({
+          id: Number(contact.client_id),
+          name: contact.name,
+          email: contact.email,
+          whatsapp_phone: contact.whatsapp_phone,
+          instagram: contact.instagram || "",
+          whatsapp: contact.whatsapp || contact.whatsapp_phone,
+          purchaseHistory: contact.purchaseHistory || [],
+        }));
+
+        setContacts(transformedContacts);
+        setError(null); // Limpiar el error si la solicitud fue exitosa
+      } else {
+        setError("No tienes contactos");
       }
+    } catch (error) {
+      setError("Error de red: " + (error as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      try {
-        const response = await fetch("https://api.unicornio.tech/clients", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const transformedContacts: Contact[] = data.map((contact: any) => ({
-            id: Number(contact.client_id),
-            name: contact.name,
-            email: contact.email,
-            whatsapp_phone: contact.whatsapp_phone,
-            instagram: contact.instagram || "",
-            whatsapp: contact.whatsapp || contact.whatsapp_phone,
-            purchaseHistory: contact.purchaseHistory || [],
-          }));
-
-          setContacts(transformedContacts);
-          localStorage.setItem("clients", JSON.stringify(transformedContacts)); // Guardar en localStorage
-          console.log("✅ Clientes guardados en localStorage");
-        } else {
-          console.error("Error al obtener los contactos");
-        }
-      } catch (error) {
-        console.error("Error de red:", error);
-      }
-    };
-
+  useEffect(() => {
     fetchContacts();
   }, [token]);
 
@@ -96,7 +92,11 @@ export function ContactList() {
           <CardTitle>Contactos</CardTitle>
         </CardHeader>
         <CardContent>
-          {contacts.length === 0 ? (
+          {loading ? (
+            <p className="text-gray-500">Cargando clientes...</p>
+          ) : error ? (
+            <p className="text-red-500">{error}</p>
+          ) : contacts.length === 0 ? (
             <p className="text-gray-500">No hay clientes disponibles.</p>
           ) : (
             <ul className="space-y-4">

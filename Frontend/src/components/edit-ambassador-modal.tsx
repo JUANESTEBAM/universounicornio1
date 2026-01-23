@@ -8,24 +8,20 @@ import { Button } from "./ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form"
 import { Input } from "./ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { toast } from "../hooks/use-toast"
 
 const formSchema = z.object({
   full_name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   email: z.string().email("Correo electrónico inválido"),
   whatsapp_number: z.string().min(10, "El teléfono debe tener al menos 10 dígitos"),
-  distribuidor_id: z.string().min(1, "Debe seleccionar un distribuidor"),
-  status: z.enum(["active", "inactive"]),
 })
 
 interface Ambassador {
-  _id: string
+  _id: string  // <-- ID como string
   full_name: string
   email: string
   whatsapp_number: string
-  distribuidor_id: string
-  status: "active" | "inactive"
+  distribuidor_id: string  // <-- ID como string
   pais: string
 }
 
@@ -43,8 +39,6 @@ export function EditAmbassadorModal({ isOpen, onClose, ambassador, onUpdate }: E
       full_name: ambassador.full_name,
       email: ambassador.email,
       whatsapp_number: ambassador.whatsapp_number,
-      distribuidor_id: ambassador.distribuidor_id,
-      status: ambassador.status,
     },
   })
 
@@ -54,8 +48,6 @@ export function EditAmbassadorModal({ isOpen, onClose, ambassador, onUpdate }: E
       full_name: ambassador.full_name,
       email: ambassador.email,
       whatsapp_number: ambassador.whatsapp_number,
-      distribuidor_id: ambassador.distribuidor_id,
-      status: ambassador.status,
     })
   }, [ambassador, form])
 
@@ -68,7 +60,10 @@ export function EditAmbassadorModal({ isOpen, onClose, ambassador, onUpdate }: E
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          ...values,
+          distribuidor_id: ambassador.distribuidor_id,  // <-- Incluir el distribuidor_id en la solicitud
+        }),
       })
 
       if (!response.ok) {
@@ -127,49 +122,6 @@ export function EditAmbassadorModal({ isOpen, onClose, ambassador, onUpdate }: E
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="distribuidor_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Distribuidor</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar distribuidor" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="distribuidora-central">Distribuidora Central</SelectItem>
-                      <SelectItem value="belleza-total">Belleza Total</SelectItem>
-                      <SelectItem value="cosmeticos-del-norte">Cosméticos del Norte</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Estado</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar estado" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="active">Activo</SelectItem>
-                      <SelectItem value="inactive">Inactivo</SelectItem>
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

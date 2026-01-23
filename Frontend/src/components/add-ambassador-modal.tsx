@@ -1,47 +1,78 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { Button } from "./ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form"
-import { Input } from "./ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { toast } from "../hooks/use-toast"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { useState } from "react";
+import { Button } from "./ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form";
+import { Input } from "./ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { toast } from "../hooks/use-toast";
 
+// 📌 Esquema de validación con Zod
 const formSchema = z.object({
-  name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
+  full_name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   email: z.string().email("Correo electrónico inválido"),
-  phone: z.string().min(10, "El teléfono debe tener al menos 10 dígitos"),
-  distributor: z.string().min(1, "Debe seleccionar un distribuidor"),
-})
+  whatsapp_number: z.string().min(10, "El teléfono debe tener al menos 10 dígitos"),
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+  pais: z.string().min(2, "Debe seleccionar un país"),
+});
 
+// 📌 Props para controlar el modal
 interface AddAmbassadorModalProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 export function AddAmbassadorModal({ isOpen, onClose }: AddAmbassadorModalProps) {
+  const [loading, setLoading] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      full_name: "",
       email: "",
-      phone: "",
-      distributor: "",
+      whatsapp_number: "",
+      password: "",
+      pais: "",
     },
-  })
+  });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Aquí se implementaría la lógica para guardar el embajador
-    console.log(values)
-    toast({
-      title: "Embajador añadido",
-      description: "El embajador ha sido añadido exitosamente.",
-    })
-    form.reset()
-    onClose()
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      setLoading(true);
+      const response = await fetch("https://api.unicornio.tech/crear-embajador/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`, // 📌 Asegúrate de tener el token
+        },
+        body: JSON.stringify(values),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Error al crear embajador");
+      }
+
+      toast({
+        title: "Éxito",
+        description: "El embajador ha sido creado exitosamente.",
+      });
+
+      form.reset();
+      onClose();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Hubo un problema al crear el embajador.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -54,7 +85,7 @@ export function AddAmbassadorModal({ isOpen, onClose }: AddAmbassadorModalProps)
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="name"
+              name="full_name"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nombre</FormLabel>
@@ -80,7 +111,7 @@ export function AddAmbassadorModal({ isOpen, onClose }: AddAmbassadorModalProps)
             />
             <FormField
               control={form.control}
-              name="phone"
+              name="whatsapp_number"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Teléfono</FormLabel>
@@ -93,20 +124,32 @@ export function AddAmbassadorModal({ isOpen, onClose }: AddAmbassadorModalProps)
             />
             <FormField
               control={form.control}
-              name="distributor"
+              name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Distribuidor</FormLabel>
+                  <FormLabel>Contraseña</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="********" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="pais"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>País</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar distribuidor" />
+                        <SelectValue placeholder="Seleccionar país" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="distribuidora-central">Distribuidora Central</SelectItem>
-                      <SelectItem value="belleza-total">Belleza Total</SelectItem>
-                      <SelectItem value="cosmeticos-del-norte">Cosméticos del Norte</SelectItem>
+                      <SelectItem value="Colombia">Colombia</SelectItem>
+                      <SelectItem value="México">México</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -114,15 +157,16 @@ export function AddAmbassadorModal({ isOpen, onClose }: AddAmbassadorModalProps)
               )}
             />
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={onClose}>
+              <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
                 Cancelar
               </Button>
-              <Button type="submit">Guardar</Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Guardando..." : "Guardar"}
+              </Button>
             </div>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-
